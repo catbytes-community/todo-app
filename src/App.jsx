@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
+import projects, { useProjects } from "./projects";
 
 function App() {
   const [newItem, setNewItem] = useState(""); // not a persistent state
@@ -12,16 +13,45 @@ function App() {
 
   const addItem = () => {
     setItems([...items, { id: items.length + 1, item: newItem }]);
-    console.log("Items: ", items);
     setNewItem("");
   };
 
-  useEffect(() => {
-    console.log("Items from useEffect: ", items);
-  }, [items]);
-
   const deleteItem = (id) => {
     setItems(items.filter((item) => item.id !== id));
+  };
+
+  // useEffect(() => {
+  //   console.log("projects: ", projects);
+
+  //   // destructuring arrays
+  //   const [a, b] = projects;
+  //   // console.log("project1: ", a);
+  //   // console.log("project2: ", b);
+  //   // const [...allElements] = projects;
+  //   // console.log("all elements of the array: ", allElements);
+
+  //   // destructuring objects
+  //   // const { projectName = "defaultProjectName" } = a;
+  //   const { projectName: name } = a;
+  //   // projects[0].projectName
+  //   console.log("project name: ", name);
+
+  //   // custom hooks in React
+  // }, []);
+
+  const [project] = projects;
+  // console.log(useProjects(project));
+  const [projectName, getOwnerName] = useProjects(project);
+  // console.log(projectName);
+  // getOwnerName();
+
+  const completeTask = (id) => {
+    // console.log("Complete task: ", id); // isTaskComplete boolean
+    const completedTask = items.filter((item) => item.id === id)[0];
+    console.log("Completed task: ", completedTask);
+
+    completedTask.isTaskComplete = !completedTask.isTaskComplete;
+    setItems([...items]);
   };
 
   return (
@@ -36,21 +66,39 @@ function App() {
 
       <div>
         <p>Things to do today:</p>
-        {items.map((item, index) => {
-          return (
-            <div key={index} className="todo-list-container">
-              <p>{item.item}</p>
-              <button className="todo-item-btn">Complete</button>
-              <button
-                onClick={() => deleteItem(item.id)}
-                className="todo-item-btn"
-              >
-                Delete
-              </button>
-              <button className="todo-item-btn">Edit</button>
-            </div>
-          );
-        })}
+        <ul>
+          {items.map((item, index) => {
+            return (
+              <li key={index}>
+                <div className="todo-list-container">
+                  {/* ternary operator */}
+                  <p
+                    style={{
+                      textDecoration: item.isTaskComplete
+                        ? "line-through"
+                        : "none",
+                    }}
+                  >
+                    {item.item}
+                  </p>
+                  <button
+                    onClick={() => completeTask(item.id)}
+                    className="todo-item-btn"
+                  >
+                    {item.isTaskComplete ? "Undo" : "Complete"}
+                  </button>
+                  <button
+                    onClick={() => deleteItem(item.id)}
+                    className="todo-item-btn"
+                  >
+                    Delete
+                  </button>
+                  <button className="todo-item-btn">Edit</button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </>
   );
