@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./App.css";
-import projects, { useProjects } from "./projects";
 
 function App() {
-  const [newItem, setNewItem] = useState(""); // not a persistent state
-  const [items, setItems] = useState([]); // ['clean the house', 'webdev lesson']
-  // [{ id: 1, item: 'clean the house' },{}]
+  const [newItem, setNewItem] = useState("");
+  const [items, setItems] = useState([]);
+  const [updatedItem, setUpdatedItem] = useState();
 
   const handleChangeItem = (e) => {
     setNewItem(e.target.value);
@@ -20,37 +19,32 @@ function App() {
     setItems(items.filter((item) => item.id !== id));
   };
 
-  // useEffect(() => {
-  //   console.log("projects: ", projects);
-
-  //   // destructuring arrays
-  //   const [a, b] = projects;
-  //   // console.log("project1: ", a);
-  //   // console.log("project2: ", b);
-  //   // const [...allElements] = projects;
-  //   // console.log("all elements of the array: ", allElements);
-
-  //   // destructuring objects
-  //   // const { projectName = "defaultProjectName" } = a;
-  //   const { projectName: name } = a;
-  //   // projects[0].projectName
-  //   console.log("project name: ", name);
-
-  //   // custom hooks in React
-  // }, []);
-
-  const [project] = projects;
-  // console.log(useProjects(project));
-  const [projectName, getOwnerName] = useProjects(project);
-  // console.log(projectName);
-  // getOwnerName();
-
   const completeTask = (id) => {
-    // console.log("Complete task: ", id); // isTaskComplete boolean
     const completedTask = items.filter((item) => item.id === id)[0];
-    console.log("Completed task: ", completedTask);
 
     completedTask.isTaskComplete = !completedTask.isTaskComplete;
+    setItems([...items]);
+  };
+
+  const saveUpdatedItem = (id) => {
+    const updatedTask = items.filter((item) => item.id === id)[0];
+    updatedTask.item = updatedItem;
+    updatedTask.isEdit = false;
+
+    setItems([...items]);
+    setUpdatedItem();
+  };
+
+  const handleClickEdit = (id, currValue) => {
+    const editedItem = items.filter((item) => item.id === id)[0];
+    editedItem.isEdit = true;
+    setUpdatedItem(currValue);
+    setItems([...items]);
+  };
+
+  const cancelEdit = (id) => {
+    const editedItem = items.filter((item) => item.id === id)[0];
+    editedItem.isEdit = false;
     setItems([...items]);
   };
 
@@ -67,9 +61,9 @@ function App() {
       <div>
         <p>Things to do today:</p>
         <ul>
-          {items.map((item, index) => {
+          {items.map((item) => {
             return (
-              <li key={index}>
+              <li key={item.id}>
                 <div className="todo-list-container">
                   {/* ternary operator */}
                   <p
@@ -85,6 +79,7 @@ function App() {
                     onClick={() => completeTask(item.id)}
                     className="todo-item-btn"
                   >
+                    {/* ternary operators for conditional rendering */}
                     {item.isTaskComplete ? "Undo" : "Complete"}
                   </button>
                   <button
@@ -93,8 +88,27 @@ function App() {
                   >
                     Delete
                   </button>
-                  <button className="todo-item-btn">Edit</button>
+                  <button
+                    className="todo-item-btn"
+                    onClick={() => handleClickEdit(item.id, item.item)}
+                  >
+                    Edit
+                  </button>
                 </div>
+
+                {item.isEdit && (
+                  <div>
+                    <input
+                      placeholder="Specify updated item"
+                      value={updatedItem}
+                      onChange={(e) => setUpdatedItem(e.target.value)}
+                    />
+                    <button onClick={() => saveUpdatedItem(item.id)}>
+                      Save
+                    </button>
+                    <button onClick={() => cancelEdit(item.id)}>Cancel</button>
+                  </div>
+                )}
               </li>
             );
           })}
