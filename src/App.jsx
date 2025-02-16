@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { TodoContext } from "./TodoContext";
 import "./App.css";
+import TodoItem from "./components/TodoItem";
 
 function App() {
+  // these are todo items from our context
+  const todoItems = useContext(TodoContext);
+  console.log("todo items from context: ", todoItems);
+
   const [newItem, setNewItem] = useState("");
-  const [items, setItems] = useState([]);
+  // local storage gives you data persistency
+  const [items, setItems] = useState(
+    JSON.parse(sessionStorage.getItem("items")) || []
+  );
   const [updatedItem, setUpdatedItem] = useState();
 
   const handleChangeItem = (e) => {
@@ -12,11 +21,19 @@ function App() {
 
   const addItem = () => {
     setItems([...items, { id: items.length + 1, item: newItem }]);
+    sessionStorage.setItem(
+      "items",
+      JSON.stringify([...items, { id: items.length + 1, item: newItem }])
+    );
     setNewItem("");
   };
 
   const deleteItem = (id) => {
     setItems(items.filter((item) => item.id !== id));
+    sessionStorage.setItem(
+      "items",
+      JSON.stringify(items.filter((item) => item.id !== id))
+    );
   };
 
   const completeTask = (id) => {
@@ -24,6 +41,7 @@ function App() {
 
     completedTask.isTaskComplete = !completedTask.isTaskComplete;
     setItems([...items]);
+    sessionStorage.setItem("items", JSON.stringify([...items]));
   };
 
   const saveUpdatedItem = (id) => {
@@ -32,6 +50,7 @@ function App() {
     updatedTask.isEdit = false;
 
     setItems([...items]);
+    sessionStorage.setItem("items", JSON.stringify([...items]));
     setUpdatedItem();
   };
 
@@ -40,17 +59,30 @@ function App() {
     editedItem.isEdit = true;
     setUpdatedItem(currValue);
     setItems([...items]);
+    sessionStorage.setItem("items", JSON.stringify([...items]));
   };
 
   const cancelEdit = (id) => {
     const editedItem = items.filter((item) => item.id === id)[0];
     editedItem.isEdit = false;
     setItems([...items]);
+    sessionStorage.setItem("items", JSON.stringify([...items]));
+  };
+
+  const resetStorage = () => {
+    sessionStorage.clear();
+    setItems([]);
   };
 
   return (
     <>
       <h1>Todo App</h1>
+      <button
+        style={{ display: "block", marginBottom: "10px" }}
+        onClick={resetStorage}
+      >
+        Reset local storage
+      </button>
       <input
         placeholder="Add a new todo"
         onChange={handleChangeItem}
@@ -61,55 +93,19 @@ function App() {
       <div>
         <p>Things to do today:</p>
         <ul>
-          {items.map((item) => {
+          {JSON.parse(sessionStorage.getItem("items"))?.map((item) => {
             return (
-              <li key={item.id}>
-                <div className="todo-list-container">
-                  {/* ternary operator */}
-                  <p
-                    style={{
-                      textDecoration: item.isTaskComplete
-                        ? "line-through"
-                        : "none",
-                    }}
-                  >
-                    {item.item}
-                  </p>
-                  <button
-                    onClick={() => completeTask(item.id)}
-                    className="todo-item-btn"
-                  >
-                    {/* ternary operators for conditional rendering */}
-                    {item.isTaskComplete ? "Undo" : "Complete"}
-                  </button>
-                  <button
-                    onClick={() => deleteItem(item.id)}
-                    className="todo-item-btn"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    className="todo-item-btn"
-                    onClick={() => handleClickEdit(item.id, item.item)}
-                  >
-                    Edit
-                  </button>
-                </div>
-
-                {item.isEdit && (
-                  <div>
-                    <input
-                      placeholder="Specify updated item"
-                      value={updatedItem}
-                      onChange={(e) => setUpdatedItem(e.target.value)}
-                    />
-                    <button onClick={() => saveUpdatedItem(item.id)}>
-                      Save
-                    </button>
-                    <button onClick={() => cancelEdit(item.id)}>Cancel</button>
-                  </div>
-                )}
-              </li>
+              <TodoItem
+                key={item.id}
+                item={item}
+                completeTask={() => completeTask(item.id)}
+                deleteItem={() => deleteItem(item.id)}
+                handleClickEdit={() => handleClickEdit(item.id, item.item)}
+                updatedItem={updatedItem || ""}
+                onChangeEditItem={(e) => setUpdatedItem(e.target.value)}
+                saveUpdatedItem={() => saveUpdatedItem(item.id)}
+                cancelEdit={() => cancelEdit(item.id)}
+              />
             );
           })}
         </ul>
