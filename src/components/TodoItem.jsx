@@ -25,28 +25,29 @@ export default function TodoItem({
 }) {
   const todoItems = useContext(TodoContext);
   console.log("todo items from context in Todo component: ", todoItems);
+  const buttonStyle = "p-2 rounded text-white";
 
   return (
-    <li key={item.id}>
-      <div className="todo-list-container">
+    <li key={item.id} className="list-disc ml-5">
+      <div className="flex items-center gap-5">
         {/* ternary operator */}
-        <p
-          style={{
-            textDecoration: item.isTaskComplete ? "line-through" : "none",
-          }}
+        <p className={item.isTaskComplete && "line-through"}>{item.item}</p>
+        <button
+          onClick={() => completeTask(item.id)}
+          className={`bg-green-500 ${buttonStyle}`}
         >
-          {item.item}
-        </p>
-        <button onClick={() => completeTask(item.id)} className="todo-item-btn">
           {/* ternary operators for conditional rendering */}
           {item.isTaskComplete ? "Undo" : "Complete"}
         </button>
-        <button onClick={() => deleteItem(item.id)} className="todo-item-btn">
+        <button
+          onClick={() => deleteItem(item.id)}
+          className="p-2 rounded bg-red-500 text-white"
+        >
           Delete
         </button>
         <button
-          className="todo-item-btn"
           onClick={() => handleClickEdit(item.id, item.item)}
+          className="p-2 rounded bg-cyan-500 text-white"
         >
           Edit
         </button>
@@ -58,9 +59,20 @@ export default function TodoItem({
             placeholder="Specify updated item"
             value={updatedItem}
             onChange={onChangeEditItem}
+            className="bg-white p-2 rounded w-[250px] mt-5 mr-5"
           />
-          <button onClick={() => saveUpdatedItem(item.id)}>Save</button>
-          <button onClick={() => cancelEdit(item.id)}>Cancel</button>
+          <button
+            className={`${buttonStyle}  bg-indigo-500 mr-5`}
+            onClick={() => saveUpdatedItem(item.id)}
+          >
+            Save
+          </button>
+          <button
+            className={`${buttonStyle}  bg-pink-500`}
+            onClick={() => cancelEdit(item.id)}
+          >
+            Cancel
+          </button>
         </div>
       )}
     </li>
