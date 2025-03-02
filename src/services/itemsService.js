@@ -1,5 +1,6 @@
 export const addItem = (items, setItems, newItem, setNewItem) => {
   setItems([...items, { id: items.length + 1, item: newItem }]);
+  // {id:1, item: "tasl to do"}
   sessionStorage.setItem(
     "items",
     JSON.stringify([...items, { id: items.length + 1, item: newItem }])
