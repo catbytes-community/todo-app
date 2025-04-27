@@ -6,6 +6,10 @@ export const tasksSlice = createSlice({
     value: [],
   },
   reducers: {
+    setTasks: (state, action) => {
+      console.log("payload", action);
+      state.value = action.payload;
+    },
     addTask: (state, action) => {
       console.log("payload", action);
       state.value = [...state.value, action.payload];

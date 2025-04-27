@@ -1,6 +1,7 @@
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const app = express();
@@ -11,38 +12,59 @@ app.use(cors());
 // Database connection
 mongoose
   .connect(
-    "mongodb+srv://marinakim:UWNNX1kvnzx3ighn@catbytescluster.osj8oyj.mongodb.net/todo-db?retryWrites=true&w=majority&appName=CatBytesCluster"
+    `mongodb+srv://marinakim:${process.env.MONGO_DB_PASSWORD}@catbytescluster.osj8oyj.mongodb.net/todo-db?retryWrites=true&w=majority&appName=CatBytesCluster`
   )
   .then(() => console.log("Connected!"));
 
 // Schema
-const UserSchema = new Schema({
-  name: { type: String },
-  lastName: { type: String },
+const todoSchema = new Schema({
+  item: String,
+  isTaskComplete: Boolean,
 });
 
 // Model
-const User = mongoose.model("User", UserSchema);
+const Todo = mongoose.model("Todo", todoSchema);
 
-// API route
-app.get("/users", async (req, res) => {
-  console.log("Getting all users from users table...");
-  const todoItems = await User.find();
-  console.log("Found items: ", todoItems);
+// API routes - CRUD operations
 
-  res.json(todoItems);
+// create new item in database
+app.post("/items", (req, res) => {
+  const newItem = new Todo(req.body);
+  newItem.save();
+
+  res.json(newItem);
 });
 
-// API to create new user
-app.post("/users", async (req, res) => {
-  console.log("Creating new user...");
-  const newItem = new User({
-    name: "Alina",
-    lastName: "CatBytes",
-  });
+// get all items from database
+app.get("/items", async (req, res) => {
+  await Todo.find()
+    .then((items) => {
+      res.json(items);
+    })
+    .catch((err) => console.log(err));
+});
 
-  await newItem.save();
-  res.json(newItem);
+// delete item from database
+app.delete("/items/:id", async (req, res) => {
+  const id = req.params.id;
+
+  await Todo.findByIdAndDelete(id)
+    .then((deletedItem) => {
+      res.json(deletedItem);
+    })
+    .catch((err) => console.log(err));
+});
+
+// update item in database
+app.put("/items/:id", async (req, res) => {
+  const id = req.params.id;
+  await Todo.findByIdAndUpdate(id, req.body, {
+    new: true,
+  })
+    .then((item) => {
+      res.json(item);
+    })
+    .catch((err) => console.log(err));
 });
 
 // Server running

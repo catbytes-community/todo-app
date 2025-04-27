@@ -1,77 +1,79 @@
-import { useState } from "react";
-// import { TodoContext } from "./TodoContext";
+import { useState, useEffect } from "react";
 import "./App.css";
 import TodoItem from "./components/TodoItem";
-import {
-  // addItem,
-  deleteItem,
-  completeItem,
-  updateItem,
-} from "./services/itemsService.js";
 import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
 
 function App() {
-  const counter = useSelector((state) => state.counter.value);
-  const tasks = useSelector((state) => state.tasks.value);
+  const tasks = useSelector((state) => state.tasks.value); // redux store
 
   const dispatch = useDispatch();
-
-  // these are todo items from our context
-  // const todoItems = useContext(TodoContext);
-
   const [newItem, setNewItem] = useState("");
-  // local storage gives you data persistency
-  const [items, setItems] = useState(
-    JSON.parse(sessionStorage.getItem("items")) || []
-  );
+
   const [updatedItem, setUpdatedItem] = useState();
+
+  // on page load
+  useEffect(() => {
+    // get all items from database
+    const getAllItems = async () => {
+      const response = await axios.get("http://localhost:3001/items");
+      console.log("Response from server: ", response);
+      // save to redux
+      dispatch({
+        type: "tasks/setTasks",
+        payload: response.data.map((item) => {
+          return {
+            id: item._id,
+            item: item.item,
+          };
+        }),
+      });
+    };
+
+    getAllItems();
+  }, []);
 
   const handleChangeItem = (e) => {
     setNewItem(e.target.value);
   };
 
-  // const saveUpdatedItem = (id) => {
-  //   const updatedTask = items.filter((item) => item.id === id)[0];
-  //   updatedTask.item = updatedItem;
-  //   updatedTask.isEdit = false;
+  const addItemToRedux = async () => {
+    // save to database API call
+    const response = await axios.post("http://localhost:3001/items", {
+      item: newItem,
+    });
+    console.log("Save item response: ", response);
 
-  //   setItems([...items]);
-  //   sessionStorage.setItem("items", JSON.stringify([...items]));
-  //   setUpdatedItem();
-  // };
-
-  // const cancelEdit = (id) => {
-  //   const editedItem = items.filter((item) => item.id === id)[0];
-  //   editedItem.isEdit = false;
-  //   setItems([...items]);
-  //   sessionStorage.setItem("items", JSON.stringify([...items]));
-  // };
-
-  const resetStorage = () => {
-    sessionStorage.clear();
-    setItems([]);
-  };
-
-  const addItemToRedux = () => {
     dispatch({
       type: "tasks/addTask",
-      payload: { id: tasks.length + 1, item: newItem },
+      payload: { id: response.data._id, item: response.data.item },
     });
     setNewItem("");
   };
 
-  const deleteItemFromRedux = (id) => {
+  const deleteItemFromRedux = async (id) => {
     dispatch({
       type: "tasks/deleteTask",
       payload: { id },
     });
+
+    // delete from database API call
+    const response = await axios.delete(`http://localhost:3001/items/${id}`);
+    console.log("response delete", response);
   };
 
-  const completeTaskInRedux = (id) => {
+  const completeTaskInRedux = async (id, isTaskComplete) => {
     dispatch({
       type: "tasks/completeTask",
       payload: id,
     });
+
+    // update task in database to be completed
+    const response = await axios.put(`http://localhost:3001/items/${id}`, {
+      isTaskComplete: !isTaskComplete,
+    });
+
+    console.log("response complete task:", response);
   };
 
   const updateTaskInRedux = (id, currentItemValue) => {
@@ -81,43 +83,25 @@ function App() {
     });
   };
 
-  const saveUpdatedItemInRedux = (id) => {
+  const saveUpdatedItemInRedux = async (id) => {
     dispatch({
       type: "tasks/saveUpdatedItem",
       payload: { id, item: updatedItem },
     });
+
+    // save updated item in database API call
+    const response = await axios.put(`http://localhost:3001/items/${id}`, {
+      item: updatedItem,
+    });
+
+    console.log("response from server update: ", response);
+
     setUpdatedItem("");
   };
 
   return (
     <div className="bg-teal-100 h-screen p-10">
-      <h1 className="font-bold text-center">Counter</h1>
-      <div className="flex justify-center items-center gap-5 mb-10">
-        <button
-          onClick={() => {
-            dispatch({ type: "counter/decrement" });
-          }}
-          className="p-2 rounded bg-pink-500 text-white"
-        >
-          Decrease
-        </button>
-        <p>{counter}</p>
-        <button
-          onClick={() => {
-            dispatch({ type: "counter/increment" });
-          }}
-          className="p-2 rounded bg-pink-500 text-white"
-        >
-          Increase
-        </button>
-      </div>
       <h1 className="font-bold mb-10 text-center">Todo App</h1>
-      <button
-        onClick={resetStorage}
-        className="bg-teal-500 text-white p-2 rounded mb-5"
-      >
-        Reset local storage
-      </button>
       <div>
         <input
           placeholder="Add a new todo"
@@ -126,9 +110,6 @@ function App() {
           className="bg-white p-2 rounded w-[250px]"
         />
         <button
-          // onClick={() => {
-          //   addItem(items, setItems, newItem, setNewItem);
-          // }}
           onClick={addItemToRedux}
           className="bg-teal-500 text-white p-2 rounded ml-2"
         >
@@ -144,19 +125,10 @@ function App() {
               <TodoItem
                 key={item.id}
                 item={item}
-                // completeTask={() => completeItem(item.id, items, setItems)}
-                completeTask={() => completeTaskInRedux(item.id)}
-                // deleteItem={() => deleteItem(item.id, items, setItems)}
+                completeTask={() =>
+                  completeTaskInRedux(item.id, item?.isTaskComplete)
+                }
                 deleteItem={() => deleteItemFromRedux(item.id)}
-                // handleClickEdit={() =>
-                //   updateItem(
-                //     item.id,
-                //     item.item,
-                //     items,
-                //     setItems,
-                //     setUpdatedItem
-                //   )
-                // }
                 handleClickEdit={() => {
                   updateTaskInRedux(item.id, item.item);
                   setUpdatedItem(item.item);

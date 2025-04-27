@@ -24,7 +24,6 @@ export default function TodoItem({
   cancelEdit,
 }) {
   const todoItems = useContext(TodoContext);
-  console.log("todo items from context in Todo component: ", todoItems);
   const buttonStyle = "p-2 rounded text-white";
 
   return (
