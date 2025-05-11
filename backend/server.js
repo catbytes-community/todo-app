@@ -67,6 +67,25 @@ app.put("/items/:id", async (req, res) => {
     .catch((err) => console.log(err));
 });
 
+const users = [
+  {
+    id: 1,
+    name: "Marina",
+    email: "marina@test.com",
+    password: "marinka",
+  },
+];
+
+// API to login users
+app.post("/login", (req, res) => {
+  // const { email, password } = req.query;
+  console.log("Request object", req.body);
+
+  // console.log("User is trying to login: ", email, password);
+
+  res.send("Login user API");
+});
+
 // Server running
 app.listen(3001, () => {
   console.log("Server is running on port 3001");
