@@ -72,18 +72,20 @@ const users = [
     id: 1,
     name: "Marina",
     email: "marina@test.com",
-    password: "marinka",
+    hashedPassword: "$2a$10$EBcuIom/IRx3s1CAUFL5z..ztxUEFfXhljOpT6A/ng7ubyx8xJsYu",
   },
 ];
 
 // API to login users
 app.post("/login", (req, res) => {
-  // const { email, password } = req.query;
-  console.log("Request object", req.body);
+  const { email, hashedPassword } = req.body;
+  const user = users.find(user => user.email === email);
+  
+  if(!user) {
+    return res.status(401).json({message: "User not found"});
+  }
 
-  // console.log("User is trying to login: ", email, password);
-
-  res.send("Login user API");
+  res.status(200).json({hashedPassword: user.hashedPassword})
 });
 
 // Server running
