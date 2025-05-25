@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import TodoItem from "../components/TodoItem";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function TodoPage() {
+  const navigate = useNavigate();
   const tasks = useSelector((state) => state.tasks.value); // redux store
 
   const dispatch = useDispatch();
@@ -15,7 +17,11 @@ function TodoPage() {
   useEffect(() => {
     // get all items from database
     const getAllItems = async () => {
-      const response = await axios.get("http://localhost:3001/items");
+      const response = await axios.get("http://localhost:3001/items", {
+        params: {
+          userId: localStorage.getItem("userId")
+        }
+      });
       console.log("Response from server: ", response);
       // save to redux
       dispatch({
@@ -40,12 +46,13 @@ function TodoPage() {
     // save to database API call
     const response = await axios.post("http://localhost:3001/items", {
       item: newItem,
+      userId: localStorage.getItem("userId")
     });
     console.log("Save item response: ", response);
 
     dispatch({
       type: "tasks/addTask",
-      payload: { id: response.data._id, item: response.data.item },
+      payload: { id: response.data._id, item: response.data.item, userId: localStorage.getItem("userId") },
     });
     setNewItem("");
   };
@@ -98,9 +105,15 @@ function TodoPage() {
     setUpdatedItem("");
   };
 
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
+  }
+
   return (
     <div className="bg-teal-100 h-screen p-10">
       <h1 className="font-bold mb-10 text-center">Todo App</h1>
+      <button className="underline mb-5" onClick={logout}>Logout</button>
       <div>
         <input
           placeholder="Add a new todo"

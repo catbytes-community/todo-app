@@ -20,10 +20,17 @@ mongoose
 const todoSchema = new Schema({
   item: String,
   isTaskComplete: Boolean,
+  userId: String,
 });
+
+const userSchema = new Schema({
+  email: String,
+  hashedPassword: String,
+})
 
 // Model
 const Todo = mongoose.model("Todo", todoSchema);
+const User = mongoose.model("User", userSchema);
 
 // API routes - CRUD operations
 
@@ -37,7 +44,9 @@ app.post("/items", (req, res) => {
 
 // get all items from database
 app.get("/items", async (req, res) => {
-  await Todo.find()
+  const userId = req.query.userId;
+
+  await Todo.find({userId})
     .then((items) => {
       res.json(items);
     })
@@ -67,25 +76,50 @@ app.put("/items/:id", async (req, res) => {
     .catch((err) => console.log(err));
 });
 
-const users = [
-  {
-    id: 1,
-    name: "Marina",
-    email: "marina@test.com",
-    hashedPassword: "$2a$10$EBcuIom/IRx3s1CAUFL5z..ztxUEFfXhljOpT6A/ng7ubyx8xJsYu",
-  },
-];
+// API to register new users
+app.post("/users", async (req, res) => {
+  // getting email and hashedPassword from frontend
+  const {email, hashedPassword} = req.body;
+
+  if(!email || !hashedPassword) {
+    return res.status(401).json({message: "Email and password are required"})
+  }
+
+  try {
+    const existingUser = await User.findOne({email});
+    if(existingUser) {
+      return res.status(401).json({message: "User with this email already exists"})
+    }
+
+    // if no existing user, need to create one
+    const newUser = new User({
+      email,
+      hashedPassword
+    })
+
+    await newUser.save();
+
+    return res.status(201).json({message: "User registered successfully"})
+  } catch(err) {
+    console.log(err);
+  }
+})
 
 // API to login users
-app.post("/login", (req, res) => {
-  const { email, hashedPassword } = req.body;
-  const user = users.find(user => user.email === email);
+app.post("/login", async (req, res) => {
+  const { email } = req.body;
+  console.log("Email: ", email);
+  const user = await User.findOne({email});
+  console.log("User: ", user);
   
   if(!user) {
     return res.status(401).json({message: "User not found"});
   }
 
-  res.status(200).json({hashedPassword: user.hashedPassword})
+  res.status(200).json({
+    hashedPassword: user.hashedPassword,
+    userId: user._id
+  })
 });
 
 // Server running
