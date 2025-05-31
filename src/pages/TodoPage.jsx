@@ -15,12 +15,16 @@ function TodoPage() {
 
   // on page load
   useEffect(() => {
+    // check auth
+    if (!localStorage.getItem("isAuth")) {
+      navigate("/");
+    }
     // get all items from database
     const getAllItems = async () => {
       const response = await axios.get("http://localhost:3001/items", {
         params: {
-          userId: localStorage.getItem("userId")
-        }
+          userId: localStorage.getItem("userId"),
+        },
       });
       console.log("Response from server: ", response);
       // save to redux
@@ -28,8 +32,9 @@ function TodoPage() {
         type: "tasks/setTasks",
         payload: response.data.map((item) => {
           return {
-            id: item._id,
+            id: item.id,
             item: item.item,
+            isTaskComplete: item.istaskcomplete,
           };
         }),
       });
@@ -46,13 +51,19 @@ function TodoPage() {
     // save to database API call
     const response = await axios.post("http://localhost:3001/items", {
       item: newItem,
-      userId: localStorage.getItem("userId")
+      userId: localStorage.getItem("userId"),
+      isTaskComplete: false,
     });
     console.log("Save item response: ", response);
 
     dispatch({
       type: "tasks/addTask",
-      payload: { id: response.data._id, item: response.data.item, userId: localStorage.getItem("userId") },
+      payload: {
+        id: response.data.id,
+        item: response.data.item,
+        userId: localStorage.getItem("userId"),
+        isTaskComplete: false,
+      },
     });
     setNewItem("");
   };
@@ -69,6 +80,7 @@ function TodoPage() {
   };
 
   const completeTaskInRedux = async (id, isTaskComplete) => {
+    console.log("Complete task: ", id, isTaskComplete);
     dispatch({
       type: "tasks/completeTask",
       payload: id,
@@ -82,22 +94,24 @@ function TodoPage() {
     console.log("response complete task:", response);
   };
 
-  const updateTaskInRedux = (id, currentItemValue) => {
+  const updateTaskInRedux = (id, currentItemValue, isTaskComplete) => {
     dispatch({
       type: "tasks/updateTask",
-      payload: { id, item: currentItemValue },
+      payload: { id, item: currentItemValue, isTaskComplete },
     });
   };
 
-  const saveUpdatedItemInRedux = async (id) => {
+  const saveUpdatedItemInRedux = async (id, isTaskComplete) => {
+    console.log("Save updated item: ", id, isTaskComplete);
     dispatch({
       type: "tasks/saveUpdatedItem",
-      payload: { id, item: updatedItem },
+      payload: { id, item: updatedItem, isTaskComplete },
     });
 
     // save updated item in database API call
     const response = await axios.put(`http://localhost:3001/items/${id}`, {
       item: updatedItem,
+      isTaskComplete,
     });
 
     console.log("response from server update: ", response);
@@ -108,12 +122,16 @@ function TodoPage() {
   const logout = () => {
     localStorage.clear();
     navigate("/");
-  }
+  };
+
+  console.log("TASKS: ", tasks);
 
   return (
     <div className="bg-teal-100 h-screen p-10">
       <h1 className="font-bold mb-10 text-center">Todo App</h1>
-      <button className="underline mb-5" onClick={logout}>Logout</button>
+      <button className="underline mb-5" onClick={logout}>
+        Logout
+      </button>
       <div>
         <input
           placeholder="Add a new todo"
@@ -142,12 +160,14 @@ function TodoPage() {
                 }
                 deleteItem={() => deleteItemFromRedux(item.id)}
                 handleClickEdit={() => {
-                  updateTaskInRedux(item.id, item.item);
+                  updateTaskInRedux(item.id, item.item, item.istaskcomplete);
                   setUpdatedItem(item.item);
                 }}
                 updatedItem={updatedItem || ""}
                 onChangeEditItem={(e) => setUpdatedItem(e.target.value)}
-                saveUpdatedItem={() => saveUpdatedItemInRedux(item.id)}
+                saveUpdatedItem={() =>
+                  saveUpdatedItemInRedux(item.id, item.isTaskComplete)
+                }
                 cancelEdit={() => saveUpdatedItemInRedux(item.id)}
               />
             );

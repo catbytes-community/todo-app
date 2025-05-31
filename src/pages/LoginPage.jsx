@@ -15,17 +15,17 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const validate = () => {
-    if(!email || !password) {
-      console.log("Email and password are required")
-      return false
-    };
+    if (!email || !password) {
+      console.log("Email and password are required");
+      return false;
+    }
     return true;
-  }
+  };
 
   const login = async () => {
     console.log("Login user...");
 
-    if(!validate()) return;
+    if (!validate()) return;
 
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
@@ -35,27 +35,32 @@ export default function LoginPage() {
       const response = await axios.post("http://localhost:3001/login", {
         email,
       });
+      console.log("Login res from server: ", response);
 
-      if(response.status === 200) {
-        const isAuth = bcrypt.compareSync(password, response.data.hashedPassword);
-        
-        if(isAuth) {
+      if (response.status === 200) {
+        const isAuth = bcrypt.compareSync(
+          password,
+          response.data.hashedPassword
+        );
+
+        if (isAuth) {
           localStorage.setItem("isAuth", true);
           localStorage.setItem("userId", response.data.userId);
           navigate("/todo");
         }
       }
-
     } catch (err) {
       console.log("Login error: ", err);
-      setError(err?.response?.data?.message || "Login failed, please try again later");
+      setError(
+        err?.response?.data?.message || "Login failed, please try again later"
+      );
     }
   };
 
-  const register = async() => {
+  const register = async () => {
     console.log("Registering user...");
 
-    if(!validate()) return;
+    if (!validate()) return;
 
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
@@ -64,33 +69,27 @@ export default function LoginPage() {
     try {
       const response = await axios.post("http://localhost:3001/users", {
         email: email,
-        hashedPassword: hash
-      })
+        hashedPassword: hash,
+      });
 
       console.log("Register response: ", response);
 
-      if(response.status === 201) {
+      if (response.status === 201) {
         setMessage("You have successfullly registered! You may now login");
         setIsRegister(false);
       }
-    } catch(err) {
+    } catch (err) {
       console.log("Register error: ", err);
-      setError(err.response.data.message || "Register failed, please try again later");
+      setError(
+        err.response.data.message || "Register failed, please try again later"
+      );
     }
-  }
+  };
 
   return (
     <div className="w-1/3 mx-auto mt-30">
-      {
-        error && (
-          <p className="text-red-500 italic">{error}</p>
-        )
-      }
-      {
-        message && (
-          <p className="text-green-500 italic">{message}</p>
-        )
-      }
+      {error && <p className="text-red-500 italic">{error}</p>}
+      {message && <p className="text-green-500 italic">{message}</p>}
       <input
         type="email"
         placeholder="Email"
@@ -99,7 +98,7 @@ export default function LoginPage() {
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
-          setError("")
+          setError("");
         }}
       />
       <input
@@ -119,13 +118,16 @@ export default function LoginPage() {
       >
         {isRegister ? "Register" : "Login"}
       </button>
-      
-      {isRegister ? (
-        <button className="underline mt-2" onClick={() => setIsRegister(false)}>Already have an account? Login</button>
-      ) : (
-        <button className="underline mt-2" onClick={() => setIsRegister(true)}>No account? Register</button>
-      )}
 
+      {isRegister ? (
+        <button className="underline mt-2" onClick={() => setIsRegister(false)}>
+          Already have an account? Login
+        </button>
+      ) : (
+        <button className="underline mt-2" onClick={() => setIsRegister(true)}>
+          No account? Register
+        </button>
+      )}
     </div>
   );
 }
