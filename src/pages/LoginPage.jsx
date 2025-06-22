@@ -35,10 +35,11 @@ export default function LoginPage() {
       const response = await axios.post("http://localhost:3001/login", {
         email,
       });
+      console.log("Login response: ", response);
 
       if(response.status === 200) {
         const isAuth = bcrypt.compareSync(password, response.data.hashedPassword);
-        
+        console.log("isAuth:", isAuth);
         if(isAuth) {
           localStorage.setItem("isAuth", true);
           localStorage.setItem("userId", response.data.userId);
