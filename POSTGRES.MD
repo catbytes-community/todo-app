@@ -1,0 +1,13 @@
+- brew install postgresql@15
+- brew services start postgresql@15
+- brew install libpq
+- brew link --force libpq
+- psql postgres
+- View databases: /d
+- View users: /du
+- Create database: CREATE DATABASE db_name;
+- Set password for user: ALTER USER marinakim WTH PASSWORD ‘password’;
+- You can now access psql shell with ‘psd -U marinakim -d xi’
+- But it won’t require password, you need to change config:
+  - nano /opt/homebrew/var/postgresql@15/pg_hba.conf
+  - Change method from all to md5

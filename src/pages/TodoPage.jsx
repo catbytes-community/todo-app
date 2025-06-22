@@ -19,8 +19,8 @@ function TodoPage() {
     const getAllItems = async () => {
       const response = await axios.get("http://localhost:3001/items", {
         params: {
-          userId: localStorage.getItem("userId")
-        }
+          userId: localStorage.getItem("userId"),
+        },
       });
       console.log("Response from server: ", response);
       // save to redux
@@ -30,6 +30,7 @@ function TodoPage() {
           return {
             id: item._id,
             item: item.item,
+            isTaskComplete: item.isTaskComplete,
           };
         }),
       });
@@ -46,13 +47,17 @@ function TodoPage() {
     // save to database API call
     const response = await axios.post("http://localhost:3001/items", {
       item: newItem,
-      userId: localStorage.getItem("userId")
+      userId: localStorage.getItem("userId"),
     });
     console.log("Save item response: ", response);
 
     dispatch({
       type: "tasks/addTask",
-      payload: { id: response.data._id, item: response.data.item, userId: localStorage.getItem("userId") },
+      payload: {
+        id: response.data._id,
+        item: response.data.item,
+        userId: localStorage.getItem("userId"),
+      },
     });
     setNewItem("");
   };
@@ -108,12 +113,14 @@ function TodoPage() {
   const logout = () => {
     localStorage.clear();
     navigate("/");
-  }
+  };
 
   return (
     <div className="bg-teal-100 h-screen p-10">
       <h1 className="font-bold mb-10 text-center">Todo App</h1>
-      <button className="underline mb-5" onClick={logout}>Logout</button>
+      <button className="underline mb-5" onClick={logout}>
+        Logout
+      </button>
       <div>
         <input
           placeholder="Add a new todo"
