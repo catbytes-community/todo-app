@@ -28,9 +28,9 @@ function TodoPage() {
         type: "tasks/setTasks",
         payload: response.data.map((item) => {
           return {
-            id: item._id,
+            id: item.id,
             item: item.item,
-            isTaskComplete: item.isTaskComplete,
+            isTaskComplete: item.is_task_complete,
           };
         }),
       });
@@ -54,7 +54,7 @@ function TodoPage() {
     dispatch({
       type: "tasks/addTask",
       payload: {
-        id: response.data._id,
+        id: response.data.id,
         item: response.data.item,
         userId: localStorage.getItem("userId"),
       },
@@ -73,7 +73,8 @@ function TodoPage() {
     console.log("response delete", response);
   };
 
-  const completeTaskInRedux = async (id, isTaskComplete) => {
+  const completeTaskInRedux = async (id, isTaskComplete, item) => {
+    console.log("Completing task: ", id, isTaskComplete);
     dispatch({
       type: "tasks/completeTask",
       payload: id,
@@ -81,6 +82,7 @@ function TodoPage() {
 
     // update task in database to be completed
     const response = await axios.put(`http://localhost:3001/items/${id}`, {
+      item: item,
       isTaskComplete: !isTaskComplete,
     });
 
@@ -145,7 +147,7 @@ function TodoPage() {
                 key={item.id}
                 item={item}
                 completeTask={() =>
-                  completeTaskInRedux(item.id, item?.isTaskComplete)
+                  completeTaskInRedux(item.id, item?.isTaskComplete, item.item)
                 }
                 deleteItem={() => deleteItemFromRedux(item.id)}
                 handleClickEdit={() => {

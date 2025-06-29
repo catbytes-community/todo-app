@@ -42,9 +42,8 @@ app.post("/items", async (req, res) => {
       "INSERT INTO todos (item, user_id) VALUES ($1, $2) RETURNING *",
       [item, userId]
     );
-    console.log("Result POST items", result);
 
-    res.json("POST ITEM ROUTE");
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("Error creating a todo item: ", err);
     res.status(500).json({ error: "Error adding new item" });
@@ -56,13 +55,11 @@ app.get("/items", async (req, res) => {
   const userId = req.query.userId;
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM todos WHERE user_id = $1 RETURNING *",
-      [userId]
-    );
+    const result = await pool.query("SELECT * FROM todos WHERE user_id = $1", [
+      userId,
+    ]);
 
-    console.log("GET Items result: ", result);
-    res.json("GET ITEM ROUTE");
+    res.json(result.rows);
   } catch (err) {
     console.error("Error getting user items: ", err);
     res.status(500).json({ error: "Error getting user items" });
@@ -79,7 +76,7 @@ app.delete("/items/:id", async (req, res) => {
       [id]
     );
 
-    console.log("Deleting todo items: ", result);
+    res.json(result.rows[0]);
   } catch (err) {
     console.error("Error deleting a todo item", err);
     res.status(500).json({ error: err });
@@ -87,64 +84,82 @@ app.delete("/items/:id", async (req, res) => {
 });
 
 // // update item in database
-// app.put("/items/:id", async (req, res) => {
-//   const id = req.params.id;
-//   await Todo.findByIdAndUpdate(id, req.body, {
-//     new: true,
-//   })
-//     .then((item) => {
-//       res.json(item);
-//     })
-//     .catch((err) => console.log(err));
-// });
+app.put("/items/:id", async (req, res) => {
+  const id = req.params.id;
+  const { item, isTaskComplete } = req.body;
+  console.log("Update item:", item, isTaskComplete);
 
-// // API to register new users
-// app.post("/users", async (req, res) => {
-//   // getting email and hashedPassword from frontend
-//   const { email, hashedPassword } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE todos SET item = $1, is_task_complete = $2 WHERE id = $3 RETURNING *",
+      [item, isTaskComplete, id]
+    );
 
-//   if (!email || !hashedPassword) {
-//     return res.status(401).json({ message: "Email and password are required" });
-//   }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating item: ", err);
+    res.status(500).json({ error: err });
+  }
+});
 
-//   try {
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return res
-//         .status(401)
-//         .json({ message: "User with this email already exists" });
-//     }
+// API to register new users
+app.post("/users", async (req, res) => {
+  // getting email and hashedPassword from frontend
+  const { email, hashedPassword } = req.body;
 
-//     // if no existing user, need to create one
-//     const newUser = new User({
-//       email,
-//       hashedPassword,
-//     });
+  if (!email || !hashedPassword) {
+    return res.status(401).json({ message: "Email and password are required" });
+  }
 
-//     await newUser.save();
+  try {
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    console.log("existing user: ", existingUser);
 
-//     return res.status(201).json({ message: "User registered successfully" });
-//   } catch (err) {
-//     console.log(err);
-//   }
-// });
+    if (existingUser.rows.length > 0) {
+      return res
+        .status(401)
+        .json({ message: "User with this email already exists" });
+    }
+
+    // if no existing user, need to create one
+    await pool.query(
+      "INSERT INTO users (email, hashed_password) VALUES ($1, $2)",
+      [email, hashedPassword]
+    );
+
+    return res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    console.log(err);
+  }
+});
 
 // // API to login users
-// app.post("/login", async (req, res) => {
-//   const { email } = req.body;
-//   console.log("Email: ", email);
-//   const user = await User.findOne({ email });
-//   console.log("User: ", user);
+app.post("/login", async (req, res) => {
+  const { email } = req.body;
 
-//   if (!user) {
-//     return res.status(401).json({ message: "User not found" });
-//   }
+  try {
+    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-//   res.status(200).json({
-//     hashedPassword: user.hashedPassword,
-//     userId: user._id,
-//   });
-// });
+    if (user.rows.length === 0) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    console.log("Logged in user: ", user);
+
+    res.status(200).json({
+      hashedPassword: user.rows[0].hashed_password,
+      userId: user.rows[0].id,
+    });
+  } catch (err) {
+    console.error("Login error: ", err);
+    res.status(501).json({ error: err });
+  }
+});
 
 // Server running
 app.listen(3001, () => {
