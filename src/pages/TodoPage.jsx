@@ -3,9 +3,11 @@ import TodoItem from "../components/TodoItem";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
 
-function TodoPage() {
+function TodoPage({auth}) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const tasks = useSelector((state) => state.tasks.value); // redux store
 
   const dispatch = useDispatch();
@@ -15,6 +17,21 @@ function TodoPage() {
 
   // on page load
   useEffect(() => {
+    // console.log("User:", user);
+    // check if user exists, create if user does not exist
+    const checkUser = async() => {
+      try {
+        const checkUserResponse = await axios.post("http://localhost:3001/users", {
+          userId: user.profile.sub   
+        })
+        console.log("check user response:", checkUserResponse);
+      } catch(err) {
+        console.log("error checking user", err);
+      }
+    }
+    
+    checkUser();
+
     // get all items from database
     const getAllItems = async () => {
       const response = await axios.get("http://localhost:3001/items", {
@@ -36,8 +53,15 @@ function TodoPage() {
       });
     };
 
-    getAllItems();
+    // getAllItems();
   }, []);
+
+  const signOutRedirect = () => {
+    const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
+    const logoutUri = import.meta.env.VITE_COGNITO_REDIRECT_URI;
+    const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+  };
 
   const handleChangeItem = (e) => {
     setNewItem(e.target.value);
@@ -113,16 +137,16 @@ function TodoPage() {
   };
 
   const logout = () => {
-    localStorage.clear();
-    navigate("/");
+    // localStorage.clear();
+    // navigate("/");
+    // signOutRedirect();
+    auth.removeUser();
   };
 
   return (
     <div className="bg-teal-100 h-screen p-10">
       <h1 className="font-bold mb-10 text-center">Todo App</h1>
-      <button className="underline mb-5" onClick={logout}>
-        Logout
-      </button>
+      <button onClick={logout}>Sign out</button>
       <div>
         <input
           placeholder="Add a new todo"

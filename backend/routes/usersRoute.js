@@ -4,26 +4,26 @@ const knex = require("../db/db.js");
 
 router.post("/", async (req, res) => {
   // getting email and hashedPassword from frontend
-  const { email, hashedPassword } = req.body;
+  const { userId } = req.body;
 
-  if (!email || !hashedPassword) {
-    return res.status(401).json({ message: "Email and password are required" });
+  if (!userId) {
+    return res.status(401).json({ message: "userId is required" });
   }
 
   try {
-    const existingUser = await knex("users").where({ email: email }).first();
+    const existingUser = await knex("users").where({ id: userId }).first();
 
     if (existingUser) {
       return res
         .status(401)
-        .json({ message: "User with this email already exists" });
+        .json({ message: "User with this userId already exists" });
     }
 
     await knex
-      .insert({ email: email, hashed_password: hashedPassword })
+      .insert({ id: userId })
       .into("users");
 
-    return res.status(201).json({ message: "User registered successfully" });
+    return res.status(201).json({ message: "User created successfully" });
   } catch (err) {
     console.log(err);
   }

@@ -12,6 +12,6 @@ exports.seed = async function(knex) {
     {id: 1, email: 'user1@gmail.com', hashed_password: bcrypt.hashSync("password1", bcrypt.genSaltSync(10))},
   ])
   await knex('todos').insert([
-    {id: 1, item: 'study knex', is_task_complete: false, user_id: 1, comment: 'n/a', deadline: new Date()}
+    {id: 1, item: 'study knex', is_task_complete: false, user_id: 1, deadline: new Date()}
   ])
 };
