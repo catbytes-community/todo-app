@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import TodoItem from "../components/TodoItem";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 
-function TodoPage({auth}) {
-  const navigate = useNavigate();
+function TodoPage({ auth }) {
   const { user } = useAuth();
   const tasks = useSelector((state) => state.tasks.value); // redux store
 
@@ -17,26 +15,28 @@ function TodoPage({auth}) {
 
   // on page load
   useEffect(() => {
-    // console.log("User:", user);
     // check if user exists, create if user does not exist
-    const checkUser = async() => {
+    const checkUser = async () => {
       try {
-        const checkUserResponse = await axios.post("http://localhost:3001/users", {
-          userId: user.profile.sub   
-        })
+        const checkUserResponse = await axios.post(
+          "http://localhost:3001/users",
+          {
+            userId: user.profile.sub,
+          }
+        );
         console.log("check user response:", checkUserResponse);
-      } catch(err) {
+      } catch (err) {
         console.log("error checking user", err);
       }
-    }
-    
+    };
+
     checkUser();
 
     // get all items from database
     const getAllItems = async () => {
       const response = await axios.get("http://localhost:3001/items", {
         params: {
-          userId: localStorage.getItem("userId"),
+          userId: user.profile.sub,
         },
       });
       console.log("Response from server: ", response);
@@ -53,15 +53,8 @@ function TodoPage({auth}) {
       });
     };
 
-    // getAllItems();
+    getAllItems();
   }, []);
-
-  const signOutRedirect = () => {
-    const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
-    const logoutUri = import.meta.env.VITE_COGNITO_REDIRECT_URI;
-    const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
-    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
 
   const handleChangeItem = (e) => {
     setNewItem(e.target.value);
@@ -71,7 +64,7 @@ function TodoPage({auth}) {
     // save to database API call
     const response = await axios.post("http://localhost:3001/items", {
       item: newItem,
-      userId: localStorage.getItem("userId"),
+      userId: user.profile.sub,
     });
     console.log("Save item response: ", response);
 
@@ -80,7 +73,7 @@ function TodoPage({auth}) {
       payload: {
         id: response.data.id,
         item: response.data.item,
-        userId: localStorage.getItem("userId"),
+        userId: user.profile.sub,
       },
     });
     setNewItem("");
@@ -137,9 +130,6 @@ function TodoPage({auth}) {
   };
 
   const logout = () => {
-    // localStorage.clear();
-    // navigate("/");
-    // signOutRedirect();
     auth.removeUser();
   };
 

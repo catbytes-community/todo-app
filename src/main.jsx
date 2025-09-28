@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import TodoPage from "./pages/TodoPage.jsx";
 import { AuthProvider } from "react-oidc-context";
+import SignupPage from "./pages/SignupPage.jsx";
 
 let router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ let router = createBrowserRouter([
   {
     path: "/todo",
     Component: TodoPage,
+  },
+  {
+    path: "/signup",
+    Component: SignupPage,
   },
 ]);
 
