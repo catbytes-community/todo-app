@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { signUp } from "../auth/signUp";
 import { confirmSignUp } from "../auth/confirmSignUp";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupPage() {
-  const [email, setEmail] = useState();
-  const [password, setPassword] = useState();
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [code, setCode] = useState();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(true);
+  const [code, setCode] = useState("");
+  const navigate = useNavigate();
 
   const registerUser = () => {
     console.log("Registering new user with email", email);
@@ -24,6 +26,7 @@ export default function SignupPage() {
     confirmSignUp(email, code)
       .then((res) => {
         console.log("confirm email response", res);
+        navigate("/login");
       })
       .catch((err) => console.log("err confirming email", err));
   };
@@ -49,7 +52,7 @@ export default function SignupPage() {
           className="bg-teal-500 text-white rounded py-2"
           onClick={confirmEmail}
         >
-          Sign Up
+          Confirm Email
         </button>
       </div>
     );

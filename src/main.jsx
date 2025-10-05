@@ -7,11 +7,16 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import TodoPage from "./pages/TodoPage.jsx";
 import { AuthProvider } from "react-oidc-context";
 import SignupPage from "./pages/SignupPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
 
 let router = createBrowserRouter([
   {
     path: "/",
     Component: App,
+  },
+  {
+    path: "/login",
+    Component: LoginPage,
   },
   {
     path: "/todo",

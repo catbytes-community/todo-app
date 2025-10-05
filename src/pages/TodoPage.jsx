@@ -2,42 +2,30 @@ import { useState, useEffect } from "react";
 import TodoItem from "../components/TodoItem";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
-import { useAuth } from "react-oidc-context";
+import { signOut } from "../auth/signOut";
+import { getCurrentUser } from "../auth/getUser";
+import { useNavigate } from "react-router-dom";
 
-function TodoPage({ auth }) {
-  const { user } = useAuth();
+function TodoPage() {
   const tasks = useSelector((state) => state.tasks.value); // redux store
-
   const dispatch = useDispatch();
-  const [newItem, setNewItem] = useState("");
+  const navigate = useNavigate();
 
+  const [newItem, setNewItem] = useState("");
   const [updatedItem, setUpdatedItem] = useState();
+  const [user, setUser] = useState(null);
 
   // on page load
+
+  // get current user -> check if user exists in our database
+  // if user exists -> get user todo items (if any)
+  // if user does not exist -> create user in users table
+
   useEffect(() => {
-    // check if user exists, create if user does not exist
-    const checkUser = async () => {
-      try {
-        const checkUserResponse = await axios.post(
-          "http://localhost:3001/users",
-          {
-            userId: user.profile.sub,
-          }
-        );
-        console.log("check user response:", checkUserResponse);
-      } catch (err) {
-        console.log("error checking user", err);
-      }
-    };
-
-    checkUser();
-
     // get all items from database
-    const getAllItems = async () => {
+    const getAllItems = async (userId) => {
       const response = await axios.get("http://localhost:3001/items", {
-        params: {
-          userId: user.profile.sub,
-        },
+        params: { userId },
       });
       console.log("Response from server: ", response);
       // save to redux
@@ -53,7 +41,42 @@ function TodoPage({ auth }) {
       });
     };
 
-    getAllItems();
+    // check if user exists, create if user does not exist
+    const checkUser = async (userId) => {
+      try {
+        const checkUserResponse = await axios.post(
+          "http://localhost:3001/users",
+          { userId }
+        );
+        console.log("check user response:", checkUserResponse);
+      } catch (err) {
+        console.log("error checking user", err);
+        getAllItems(userId)
+          .then((res) => {
+            console.log("Get user items res", res);
+          })
+          .catch((err) => {
+            console.log("Get user items", err);
+          });
+      }
+    };
+
+    getCurrentUser()
+      .then((user) => {
+        setUser(user);
+        // check if user exists in postgresql
+        checkUser(user.sub)
+          .then((res) => {
+            console.log("Check user res", res);
+          })
+          .catch((err) => {
+            console.log("Check user err, probably user already exists", err);
+          });
+      })
+      .catch((err) => {
+        console.log("Get user error", err);
+        setUser(null);
+      });
   }, []);
 
   const handleChangeItem = (e) => {
@@ -64,7 +87,7 @@ function TodoPage({ auth }) {
     // save to database API call
     const response = await axios.post("http://localhost:3001/items", {
       item: newItem,
-      userId: user.profile.sub,
+      userId: user.sub,
     });
     console.log("Save item response: ", response);
 
@@ -73,7 +96,7 @@ function TodoPage({ auth }) {
       payload: {
         id: response.data.id,
         item: response.data.item,
-        userId: user.profile.sub,
+        userId: user.sub,
       },
     });
     setNewItem("");
@@ -130,7 +153,12 @@ function TodoPage({ auth }) {
   };
 
   const logout = () => {
-    auth.removeUser();
+    try {
+      signOut();
+      navigate("/");
+    } catch (err) {
+      console.log("Sign out error", err);
+    }
   };
 
   return (
